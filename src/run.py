@@ -3,6 +3,9 @@ import sys
 import argparse
 from preprocessing.input import Input
 from preprocessing.params import HyperParameters
+from intrinsic.model import Model
+from costs.costs import CostFunction
+from krahenbuhl2013.krahenbuhl2013 import DenseCRF
 
 parser = argparse.ArgumentParser(
 	description=(
@@ -33,8 +36,11 @@ print('Output shaded image: ' + simg_name)
 input = Input(filename=img_name, sRGB=True)
 params = HyperParameters()
 
+# intialize cost function
+cost_func = CostFunction(input, params)
+
 # optimize using model
-# model = Model(input, params)
-# r_layer, s_layer = model.solve()
+model = Model(input, params, cost_func, DenseCRF)
+r_layer, s_layer = model.solve()
 
 # save output
