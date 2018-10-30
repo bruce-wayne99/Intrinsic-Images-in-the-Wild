@@ -2,10 +2,11 @@ import os
 import sys
 import argparse
 from preprocessing.input import Input
+from preprocessing.params import HyperParameters
 
 parser = argparse.ArgumentParser(
 	description=(
-		'Intrinsic Image Algorithm\n'
+		'Intrinsic Image Decomposition Algorithm\n'
 	)
 )
 
@@ -28,6 +29,12 @@ print('Input: ' + img_name)
 print('Output reflectance image: ' + rimg_name)
 print('Output shaded image: ' + simg_name)
 
-# create the input by preprocessing and intialize hyperparameters
+# extract input by preprocessing and intialize hyperparameters
 input = Input(filename=img_name, sRGB=True)
-# params = HyperParams()
+params = HyperParameters()
+
+# optimize using model
+# model = Model(input, params)
+# r_layer, s_layer = model.solve()
+
+# save output
