@@ -43,4 +43,8 @@ cost_func = CostFunction(input, params)
 model = Model(input, params, cost_func, DenseCRF)
 r_layer, s_layer = model.solve()
 
+# print(r_layer)
+# print(s_layer)
 # save output
+input.save(rimg_name, r_layer, rescale=True, sRGB=True)
+input.save(simg_name, s_layer, rescale=True, sRGB=True)

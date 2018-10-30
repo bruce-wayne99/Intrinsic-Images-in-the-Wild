@@ -23,6 +23,7 @@ class HyperParameters():
         # Reflectance and shading unary loss parameters
         self.abs_reflectance_weight = 0
         self.abs_shading_weight = 500.0
+        self.abs_shading_gray_point = 0.5
         self.abs_shading_log = True
         self.chromaticity_weight = 0
 

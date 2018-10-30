@@ -40,7 +40,7 @@ class Model():
 		dcrf = self.dense_crf(npixels, nlabels)
 		u_cost = self.cost_func.compute_unary_costs(self.intensities, self.chromaticities)
 		dcrf.set_unary_energy(u_cost)
-		p_cost = self.cost_func.compute_pairwise_costs(self.intensities, self.chromaticities)
+		p_cost = self.cost_func.compute_pairwise_costs(self.intensities, self.chromaticities, self.get_reflectances_rgb())
 		p_cost = (self.params.pairwise_weight * p_cost).astype(np.float32)
 		dcrf.add_pairwise_energy(pairwise_costs=p_cost, features=self.cost_func.features.copy())
 		self.labels_nz = dcrf.map(self.params.n_crf_iters)
@@ -53,3 +53,15 @@ class Model():
 		r[self.input.mask_nz] = r_nz
 		s[self.input.mask_nz] = s_nz
 		return r, s
+
+	def get_reflectances_rgb(self):
+		nlabels = self.intensities.shape[0]
+		rgb = np.zeros((nlabels, 3))
+		s = 3.0 * self.intensities
+		r = self.chromaticities[:, 0]
+		g = self.chromaticities[:, 1]
+		b = 1.0 - r - g
+		rgb[:, 0] = s * r
+		rgb[:, 1] = s * g
+		rgb[:, 2] = s * b
+		return rgb

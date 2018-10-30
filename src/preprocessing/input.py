@@ -46,6 +46,14 @@ class Input():
 		ret[idx1] = np.power((img[idx1] + 0.055) / 1.055, 2.4)
 		return ret
 
+	def rgb_to_srgb(self, img):
+		ret = np.zeros_like(img)
+		idx0 = img <= 0.0031308
+		idx1 = img > 0.0031308
+		ret[idx0] = img[idx0] * 12.92
+		ret[idx1] = np.power(1.055 * img[idx1], 1.0 / 2.4) - 0.055
+		return ret
+
 	def get_irg(self):
 		irg = np.zeros_like(self.img)
 		s = np.sum(self.img, axis=-1)
@@ -75,6 +83,21 @@ class Input():
 		return self.img[self.mask_nz]
 
 	@property
+	def image_irg_nz(self):
+		return self.img_irg[self.mask_nz]
+
+	@property
 	def mask_nnz(self):
 		return self.mask_nz[0].size
-	
+
+	def save(self, filename, mt, rescale, sRGB):
+		if rescale:
+			mt = mt / np.percentile(mt[self.mask_nz], 99.9)
+		tmt = np.zeros_like(mt)
+		if sRGB:
+			tmt[self.mask_nz] = self.rgb_to_srgb(mt[self.mask_nz]) * 255.0
+		else:
+			tmt[self.mask_nz] = mt[self.mask_nz] * 255.0
+		tmt[tmt > 255] = 255
+		tmt[tmt < 0] = 0
+		imsave(filename, tmt.astype(np.uint8))
