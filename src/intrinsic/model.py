@@ -10,9 +10,9 @@ class Model():
 
 	def solve(self):
 		self.initialize()
-		for i in range(self.params.n_iters):
-			print(i+1)
-			self.optimize_reflectance()
+		# for i in range(self.params.n_iters):
+			# print(i+1)
+		self.optimize_reflectance()
 		return self.get_r_s()
 
 	def initialize(self):

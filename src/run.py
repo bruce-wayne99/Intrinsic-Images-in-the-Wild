@@ -33,7 +33,7 @@ print('Output reflectance image: ' + rimg_name)
 print('Output shaded image: ' + simg_name)
 
 # extract input by preprocessing and intialize hyperparameters
-input = Input(filename=img_name, sRGB=True)
+input = Input(filename=img_name, sRGB=False)
 params = HyperParameters()
 
 # intialize cost function
@@ -45,6 +45,7 @@ r_layer, s_layer = model.solve()
 
 # print(r_layer)
 # print(s_layer)
+
 # save output
-input.save(rimg_name, r_layer, rescale=True, sRGB=True)
-input.save(simg_name, s_layer, rescale=True, sRGB=True)
+input.save(rimg_name, r_layer, rescale=True, sRGB=False)
+input.save(simg_name, s_layer, rescale=True, sRGB=False)
