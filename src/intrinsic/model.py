@@ -7,13 +7,23 @@ class Model():
 		self.cost_func = cost_func
 		self.params = params
 		self.dense_crf = DenseCRF
+		self.iter_num = 0
 
 	def solve(self):
 		self.initialize()
-		# for i in range(self.params.n_iters):
-			# print(i+1)
-		self.optimize_reflectance()
+		for i in range(self.params.n_iters):
+			self.iter_num = i
+			print(i+1)
+
+			# STAGE 1
+			self.optimize_reflectance()
+
+			# STAGE 2
+			self.smooth_shading()
 		return self.get_r_s()
+
+	def smooth_shading(self):
+		pass
 
 	def initialize(self):
 		img_irg = self.input.img_irg
@@ -38,7 +48,7 @@ class Model():
 		nlabels = self.intensities.shape[0]
 		npixels = self.input.mask_nz[0].size
 		dcrf = self.dense_crf(npixels, nlabels)
-		u_cost = self.cost_func.compute_unary_costs(self.intensities, self.chromaticities)
+		u_cost = self.cost_func.compute_unary_costs(self.intensities, self.chromaticities, self.iter_num)
 		dcrf.set_unary_energy(u_cost)
 		p_cost = self.cost_func.compute_pairwise_costs(self.intensities, self.chromaticities, self.get_reflectances_rgb())
 		p_cost = (self.params.pairwise_weight * p_cost).astype(np.float32)

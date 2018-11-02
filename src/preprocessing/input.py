@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from scipy.misc import imread, imsave
+from scipy.ndimage import gaussian_filter
 
 class Input():
 
@@ -101,3 +102,13 @@ class Input():
 		tmt[tmt > 255] = 255
 		tmt[tmt < 0] = 0
 		imsave(filename, tmt.astype(np.uint8))
+
+	def apply_blur(self, image_nz, sigma):
+		image_shape = self.img.shape
+		orig_mean = np.mean(image_nz)
+		image = np.empty(image_shape[0:2])
+		image.fill(orig_mean)
+		blurred = gaussian_filter(image, sigma=sigma)
+		new_mean = np.mean(blurred)
+		blurred *= orig_mean / new_mean
+		return blurred

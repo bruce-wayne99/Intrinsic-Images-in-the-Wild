@@ -26,9 +26,12 @@ class HyperParameters():
         self.abs_shading_gray_point = 0.5
         self.abs_shading_log = True
         self.chromaticity_weight = 0
+        self.shading_norm = "L2"
+        self.shading_target_weight = 20000.0
+        self.shading_chromaticity = False
 
         # Pairwise costs parameters
-        self.chromaticity_norm = "L1"
+        self.chromaticity_norm = "L2"
         self.pairwise_intensity_log = True
         self.pairwise_intensity_chromaticity = True
         self.pairwise_weight = 10000.0
