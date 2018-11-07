@@ -76,6 +76,12 @@ class Input():
 		return self.img_gray
 
 	@property
+	def log_image_gray(self):
+		if not hasattr(self, 'log_img_gray'):
+			self.log_img_gray = np.log(self.img_gray)
+		return self.log_img_gray
+
+	@property
 	def image_gray_nz(self):
 		return self.image_gray[self.mask_nz]
 

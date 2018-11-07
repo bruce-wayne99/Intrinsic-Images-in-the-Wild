@@ -23,11 +23,12 @@ class CostFunction():
 			chroma_val = np.sum(np.square(self.input.image_irg_nz[:, 1:3] - chromaticities[i, :]), axis=1)
 			unary_costs[:, i] += self.params.chromaticity_weight * chroma_val
 			# shading part
-			blur_inp = np.log(prev_s_layer)
-			sigma_sp = 0.1 * self.input.diag / (1 + iter_num)
-			log_s_target_layer = self.input.apply_blur(blur_inp, sigma_sp).flatten()
-			log_s_layer = np.log(s_layer)
-			unary_costs[:, i] += self.params.shading_target_weight * np.square(log_s_layer - log_s_target_layer)
+			if prev_s_layer is not None:
+				blur_inp = np.log(prev_s_layer)
+				sigma_sp = 0.1 * self.input.diag / (1 + iter_num)
+				log_s_target_layer = self.input.apply_blur(blur_inp, sigma_sp).flatten()
+				log_s_layer = np.log(s_layer)
+				unary_costs[:, i] += self.params.shading_target_weight * np.square(log_s_layer - log_s_target_layer)
 		return unary_costs
 
 	def compute_pairwise_costs(self, intensities, chromaticities, reflectances):

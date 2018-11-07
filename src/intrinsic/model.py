@@ -1,5 +1,6 @@
 from sklearn.cluster import MiniBatchKMeans
 import numpy as np
+import scipy
 
 class Model():
 	def __init__(self, input, params, cost_func, DenseCRF):
@@ -8,22 +9,77 @@ class Model():
 		self.params = params
 		self.dense_crf = DenseCRF
 		self.iter_num = 0
+		self.prev_s_layer = None
 
 	def solve(self):
 		self.initialize()
 		for i in range(self.params.n_iters):
-			self.iter_num = i
 			print(i+1)
-
+			self.iter_num = i
 			# STAGE 1
 			self.optimize_reflectance()
-
+			self.remove_intensities()
+			self.prev_s_layer = self.get_r_s()[1].copy()
 			# STAGE 2
 			self.smooth_shading()
+			self.prev_s_layer = self.get_r_s()[1].copy()
 		return self.get_r_s()
 
-	def smooth_shading(self):
+	def remove_intensities(self):
 		pass
+
+	def smooth_shading(self):
+		median_intensity = np.median(self.intensities)
+		log_intensities = np.log(self.intensities)
+		A_data, A_rows, A_cols, A_shape, b = self.smooth_system(log_intensities)
+		delta_intensities = self.minimize_l2(A_data, A_rows, A_cols, A_shape, b, 1e-8)
+		intensities = np.exp(log_intensities + delta_intensities)
+		intensities *= median_intensity / np.median(intensities)
+		self.intensities = intensities
+
+	def smooth_system(self, log_intensities):
+		rows, cols = self.input.img.shape[0:2]
+		labels = self.get_labels()
+		log_image_gray = self.input.log_image_gray
+		A_rows = []
+		A_cols = []
+		A_data = []
+		b = []
+		for i in xrange(rows - 1):
+			for j in xrange(cols - 1):
+				l0 = labels[i, j]
+				l1 = labels[i + 1, j]
+				if l0 != l1:
+					A_rows.append(len(b))
+					A_cols.append(l0)
+					A_data.append(1)
+					A_rows.append(len(b))
+					A_cols.append(l1)
+					A_data.append(-1)
+					bval = log_image_gray[i, j] - log_image_gray[i + 1, j]
+					bval+= log_intensities[l1] - log_intensities[l0]
+					b.append(bval)
+				l0 = labels[i, j]
+				l1 = labels[i, j + 1]
+				if l0 != l1:
+					A_rows.append(len(b))
+					A_cols.append(l0)
+					A_data.append(1)
+					A_rows.append(len(b))
+					A_cols.append(l1)
+					A_data.append(-1)
+					bval = log_image_gray[i, j] - log_image_gray[i, j + 1]
+					bval+= log_intensities[l1] - log_intensities[l0]
+					b.append(bval)
+
+		A_shape = (len(b), log_intensities.shape[0])
+		return (
+		    np.array(A_data),
+		    np.array(A_rows),
+		    np.array(A_cols),
+		    A_shape,
+		    np.array(b, dtype=np.float)
+		)
 
 	def initialize(self):
 		img_irg = self.input.img_irg
@@ -48,7 +104,7 @@ class Model():
 		nlabels = self.intensities.shape[0]
 		npixels = self.input.mask_nz[0].size
 		dcrf = self.dense_crf(npixels, nlabels)
-		u_cost = self.cost_func.compute_unary_costs(self.intensities, self.chromaticities, self.iter_num)
+		u_cost = self.cost_func.compute_unary_costs(self.intensities, self.chromaticities, self.iter_num, self.prev_s_layer)
 		dcrf.set_unary_energy(u_cost)
 		p_cost = self.cost_func.compute_pairwise_costs(self.intensities, self.chromaticities, self.get_reflectances_rgb())
 		p_cost = (self.params.pairwise_weight * p_cost).astype(np.float32)
@@ -75,3 +131,13 @@ class Model():
 		rgb[:, 1] = s * g
 		rgb[:, 2] = s * b
 		return rgb
+
+	def get_labels(self):
+		labels = np.empty((self.input.img.shape[0], self.input.img.shape[1]), dtype=np.int32)
+		labels.fill(-1)
+		labels[self.input.mask_nz] = self.labels_nz
+		return labels
+
+	def minimize_l2(self, A_data, A_rows, A_cols, A_shape, b, damp=1e-8):
+		A = scipy.sparse.csr_matrix((A_data, (A_rows, A_cols)), shape=A_shape)
+		return scipy.sparse.linalg.lsmr(A, b, damp=damp)[0]
