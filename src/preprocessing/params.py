@@ -10,7 +10,7 @@ class HyperParameters():
     def __init__(self):
 
         # Iteration parameters
-        self.n_iters = 25
+        self.n_iters = 10
         self.n_crf_iters = 10
 
         # Kmeans clustering parameters

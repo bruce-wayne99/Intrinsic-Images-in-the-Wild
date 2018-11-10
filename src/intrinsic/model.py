@@ -26,7 +26,20 @@ class Model():
 		return self.get_r_s()
 
 	def remove_intensities(self):
-		pass
+		labels = self.labels_nz
+		intensities = self.intensities
+		chromaticities = self.chromaticities
+		nlabels = intensities.shape[0]
+
+		new_to_old = np.nonzero(np.bincount(labels, minlength=nlabels))[0]
+		old_to_new = np.empty(nlabels, dtype=np.int32)
+		old_to_new.fill(-1)
+		for new, old in enumerate(new_to_old):
+			old_to_new[old] = new
+
+		self.labels_nz = old_to_new[labels]
+		self.intensities = intensities[new_to_old]
+		self.chromaticities = chromaticities[new_to_old]
 
 	def smooth_shading(self):
 		median_intensity = np.median(self.intensities)
